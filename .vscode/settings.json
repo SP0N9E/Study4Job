@@ -5,6 +5,7 @@
         "vector": "cpp",
         "algorithm": "cpp",
         "xlocinfo": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "unordered_set": "cpp"
     }
 }
