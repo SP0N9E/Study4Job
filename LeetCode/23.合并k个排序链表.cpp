@@ -64,6 +64,7 @@ public:
     };
 
     priority_queue<NodeVal> q;
+    // 通过优先队列排列节点进行合并
     ListNode *mergeKLists(vector<ListNode *> &lists)
     {
 
@@ -95,13 +96,14 @@ public:
         int mid = (l + r) / 2;
         return mergeTwoLists_1(merge(lists, l, mid), merge(lists, mid + 1, r));
     }
-
+    // 递归 类似于归并排序
     ListNode *mergeKLists_2(vector<ListNode *> &lists)
     {
         if (lists.size() == 0)
             return nullptr;
         return merge(lists, 0, lists.size() - 1);
     }
+    // 按顺序两两合并
     ListNode *mergeKLists_1(vector<ListNode *> &lists)
     {
         if (lists.size() == 0)
