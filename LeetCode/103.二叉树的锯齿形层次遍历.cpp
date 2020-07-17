@@ -70,7 +70,57 @@ struct TreeNode
 class Solution
 {
 public:
+    // 双stack
     vector<vector<int>> zigzagLevelOrder(TreeNode *root)
+    {
+        vector<vector<int>> res;
+        if (root == nullptr)
+            return res;
+        int level_idx = 1;
+        stack<TreeNode *> stack1; // 奇数层
+        stack<TreeNode *> stack2; // 偶数层
+        stack1.push(root);
+
+        while (!stack1.empty() || !stack2.empty())
+        {
+            vector<int> levelres;
+            if (level_idx & 1) // 奇数
+            {
+                while (!stack1.empty())
+                {
+                    auto node = stack1.top();
+                    stack1.pop();
+                    levelres.push_back(node->val);
+                    if (node->left)
+                        stack2.push(node->left);
+                    if (node->right)
+                        stack2.push(node->right);
+                }
+            }
+            else
+            {
+                while (!stack2.empty())
+                {
+                    auto node = stack2.top();
+                    stack2.pop();
+                    levelres.push_back(node->val);
+                    if (node->right)
+                        stack1.push(node->right);
+                    if (node->left)
+                        stack1.push(node->left);
+
+
+                }
+            }
+            res.push_back(levelres);
+            level_idx++;
+
+        }
+        return res;
+    }
+
+    // 普通层序遍历之后再反转
+    vector<vector<int>> zigzagLevelOrder_1(TreeNode *root)
     {
         vector<vector<int>> res;
         queue<TreeNode *> q;
