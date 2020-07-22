@@ -306,6 +306,32 @@ class Empty
    在参数列表之后加上const表示不会更改这个对象的变量。
 
    将const实施于成员函数的目的，是为了确认该成员函数可以作用域const对象身上。因为pass by reference-to-const可以提高c++程序的效率，因此有些时候对于同一个成员函数，我们需要提供const版本和非const版本。*《Effective C++》条款03*
+   
+5. **顶层const和底层const**
+
+   顶层const表示指针本身是个常量，或者表示任意的对象是常量
+
+   底层const表示指针所指的对象是一个常量
+
+6. **一个拥有顶层const的形参无法和另一个没有顶层const的形参区分开，因为非常量可以转化为常量。**
+
+   ```c++
+   Record lookup(Phone);
+   Record lookup(const Phone);
+   Record lookup(Phone*);
+   Record lookup(Phone* const); // 1 2一样 3 4一样
+   ```
+
+   对于接受引用或者指针的函数来说，对象是常量还是非常量对应的形参不同。
+
+   ```c++
+   Record lookup(Account&); // 函数作用于Account的引用
+   Record lookup(const Account&); // 新函数，作用与常量引用
+   Record lookup(Account*); // 新函数，作用于指向Account的指针
+   Record lookup(const Account*); // 新函数，作用于指向常量的指针 
+   ```
+
+   
 
 
 
@@ -365,7 +391,9 @@ class Empty
 
    并且STL容器容不得auto_ptr（会造成对无效指针的访问从而导致程序崩溃），因此弃用了，转而使用unique_ptr（拒绝直接的复制/赋值操作，需通过reset/release接口进行对象管理权的转移，这提高了安全性）
 
-   实现：https://blog.csdn.net/worldwindjp/article/details/18843087
+   shared_ptr实现：https://blog.csdn.net/worldwindjp/article/details/18843087
+
+   拷贝一个shared_ptr会递增其引用计数；将一个shared_ptr赋予另一个shared_ptr会递增赋值号右侧shared_ptr的引用计数，而递减左侧shared_ptr的引用计数。如果一个shared_ptr的引用计数变为0，他所指向的对象会被自动销毁。
 
 2. **智能指针可能出现的问题？**
 
@@ -379,6 +407,8 @@ class Empty
 
 4. **unique_ptr和weak_ptr是什么**
 
+   unique_ptr也不支持复制和赋值，但比auto_ptr好，直接赋值会编译出错。实在想赋值的话，需要使用：std::move。
+
    std::unique_ptr 是通过指针占有并管理另一对象，并在 unique_ptr 离开作用域时释放该对象的智能指针。在下列两者之一发生时用关联的删除器释放对象：
 
    - 销毁了管理的 unique_ptr 对象
@@ -388,7 +418,7 @@ class Empty
 
    std::weak_ptr 是一种智能指针，它对被 std::shared_ptr 管理的对象存在非拥有性（“弱”）引用。在访问所引用的对象前必须先转换为 std::shared_ptr。
 
-   weak_ptr是一种不控制所指向对象生命期的智能指针，它指向由一个shared_ptr管理的对象。讲一个weak_ptr绑定到一个shared_ptr不会改变shared_ptr的引用计数，一旦最后一个指向对象的shared_ptr被销毁，对象就会被释放，即使有weak_ptr指向对象，对象还是会被释放。weak_ptr也取名自这种弱共享对象的特点。
+   weak_ptr是一种不控制所指向对象生命期的智能指针，它指向由一个shared_ptr管理的对象。讲一个weak_ptr绑定到一个shared_ptr不会改变shared_ptr的引用计数，一旦最后一个指向对象的shared_ptr被销毁，对象就会被释放，即使有weak_ptr指向对象，对象还是会被释放。weak_ptr也取名自这种弱共享对象的特点。所以weak_ptr不保证它指向的内存一定是有效的，在使用之前需要检查weak_ptr是否为空指针。
 
    相对于weak_ptr来说 ，shared_ptr是一种强引用的关系。在循环引用的情况下资源得不到回收，将造成内存泄漏。如下图出现了引用计数的循环引用问题：对象A被对象B所引用，对象C被对象A所引用，对象B被对象C所引用，这时每个对象的引用计数都是1，都在等待在引用它的对象释放对象，造成一种循环等待的现象，而资源也不会被如愿释放掉。
 
@@ -580,10 +610,28 @@ class Empty
 
    - 作类间基类子类指针引用的转换，但没有保证安全性；子转基类是安全的但是基类转子类没有动态类型检查不安全
 
+   - 可以显式的将一个左值转换为一个右值引用。（这个我只是了解…）
+
 2. **const_cast**
 
    1. 只有**const_cast**可以改变表达式的常量属性
+
    2. 不能用**const_cast**改变表达式的类型
+
+   3. 可以用于函数的重载
+
+      ```c++
+      const string &shorterString(const string &s1, const string &s2){}
+      string &shorterString(string &s1, string &s2)
+      {
+      	auto &r = shorterString(const_cast<const string&>(s1),const_cast<const string&>(s2));
+      	return const_cast<string&>(r);
+      }
+      ```
+
+      
+
+   4. 
 
 3. **dynamic_cast**
 
@@ -624,6 +672,22 @@ class Empty
    该运算符把expression重新解释成type-id类型的对象。对象在这里的范围包括变量以及实现类的对象。
 
    此标识符的意思即为数据的二进制形式重新解释，但是不改变其值。
+   
+   >`cpp primer`解释:
+   >
+   >reinterpret_cast通常为运算对象的位模式提供较低层次上的重新解释。假设有如下转换
+   >
+   >```c++
+   >int* ip;
+   >char* pc = reinterpret_cast<char*>(ip);
+   >string str(pc);
+   >```
+   >
+   >pc所指的对象是一个int而非字符，把pc当成字符会出现无可预期的问题。
+   >
+   >由于使用reinterpret_cast相当于显示的表明这种转换是合理的，因此编译器不会进行检查，会将pc认为是一个char，但是这样的行为是很危险的。因此不建议频繁使用强制类型转换函数
+   
+   
 
 
 
@@ -657,6 +721,65 @@ push_back的话，一般来说，都是按两倍来扩容，因为push_back每�
 insert的话，因为可以一次插入多个数据，所以要复杂一些。
 
 触发扩容时，如果要插入的数据量比旧容量小，则按两倍扩容；如果要插入的数据量比原来的旧容量还要大，即表示即使按两倍扩容了，依然存不下要插入的数据，此时将会按照旧容量加要插入的数据量来扩容，保证一次扩容就能容下要插入的数据
+
+
+
+### 24.explicit的作用
+
+在C++中，explicit关键字用来修饰类的构造函数，被修饰的构造函数的类，不能发生相应的隐式类型转换，只能以显示的方式进行类型转换。
+
+使用注意事项：
+
+1.  explicit 关键字只能用于类内部的构造函数声明上。
+2. 在C++中，explicit关键字用来修饰类的构造函数，被修饰的构造函数的类，不能发生相应的隐式类型转换
+3. 只对仅含有一个参数的类构造函数有效，因为多于两个的时候是不会发生隐式转换的（除非只有一个参数需要赋值，其他的参数有默认值）
+
+```c++
+Class String{
+    String (int n); // 分配n个字节空间给字符串
+    String (const char* p);  // 用字符串p的值初始化字符串
+}
+// 正常初始化的方法
+String s1(10);  // 10个字节长度的字符串
+String s2("Hello world!"); // s2的初始值为 Hello world
+// 隐式转换的写法
+String s3 = 10;  // 编译通过，分配10个字节长度的字符串
+String s4 = 'a'; // 编译通过，分配int('a')个字节长度的字符串
+String s5 = "a"; // 编译通过，调用的是String (const char* p)
+// 使用explicit关键字
+class String{
+    explicit String (int n); // 分配n个字节空间给字符串
+    String (const char* p);  // 用字符串p的值初始化字符串
+}
+
+//此时：
+String s3 = 10;  // 编译不通过，不允许隐式转换类型
+String s4 = 'a'; // 编译不通过，不允许隐式转换类型
+```
+
+好处：可以避免一些奇怪的隐式转换
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
