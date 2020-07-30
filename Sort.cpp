@@ -3,7 +3,7 @@
  * @Description: 排序算法自己实现。
  * @Date: 2020-07-15 16:35:34
  * @LastEditors: SP0N9E
- * @LastEditTime: 2020-07-18 20:23:18
+ * @LastEditTime: 2020-07-18 20:53:26
  * @FilePath: \C++_Code\Sort.cpp
  */
 
@@ -16,12 +16,12 @@ int partition(vector<int> &num, int low, int high)
     int pivot = num[low];
     while (low < high)
     {
-        while (low < high && num[high] > pivot)
+        while (low < high && num[high] >= pivot)
         {
             high--;
         }
         num[low] = num[high];
-        while (low < high && num[low] < pivot)
+        while (low < high && num[low] <= pivot)
         {
             low++;
         }
@@ -89,11 +89,102 @@ void MergeSort(vector<int> &num)
     MergeSortHelper(num, 0, num.size() - 1);
 }
 
+void maxHeapify(vector<int> &num, int i, int len)
+{
+    for (; (i << 1) + 1 <= len;)
+    {
+        int lson = (i << 1) + 1;
+        int rson = (i << 1) + 2;
+        int large;
+        if (lson <= len && num[lson] > num[i])
+        {
+            large = lson;
+        }
+        else
+        {
+            large = i;
+        }
+        if (rson <= len && num[rson] > num[large])
+        {
+            large = rson;
+        }
+        if (large != i)
+        {
+            swap(num[i], num[large]);
+            i = large;
+        }
+        else
+            break;
+    }
+}
+
+
+void minHeapify(vector<int> &num, int i, int len)
+{
+    for (; (i << 1) + 1 <= len;)
+    {
+        int lson = (i << 1) + 1;
+        int rson = (i << 1) + 2;
+        int small;
+        if (lson <= len && num[lson] < num[i])
+        {
+            small = lson;
+        }
+        else
+        {
+            small = i;
+        }
+        if (rson <= len && num[rson] < num[small])
+        {
+            small = rson;
+        }
+        if (small != i)
+        {
+            swap(num[i], num[small]);
+            i = small;
+        }
+        else
+            break;
+    }
+}
+
+
+void buildMaxHeap(vector<int> &num, int len)
+{
+    for (int i = len / 2; i >= 0; i--)
+    {
+        maxHeapify(num, i, len);
+    }
+}
+
+void buildMinHeap(vector<int> &num, int len)
+{
+    for (int i = len / 2; i >= 0; i--)
+    {
+        minHeapify(num, i, len);
+    }
+}
+
+void HeapSort(vector<int> &num)
+{
+    int len = num.size() - 1;
+    //buildMaxHeap(num, len);
+    buildMinHeap(num, len);
+    for (int i = len; i >= 1; --i)
+    {
+        swap(num[i], num[0]);
+        len -= 1;
+        //maxHeapify(num, 0, len);
+        minHeapify(num, 0, len);
+    }
+}
+
 int main()
 {
 
     vector<int> test = {72, 6, 57, 88, 60, 42, 83, 73, 48, 85};
-    MergeSort(test);
+    //vector<int> test = {5, 1, 1, 2, 0, 0};
+    HeapSort(test);
     for (auto tmp : test)
     {
         cout << tmp << " ";
