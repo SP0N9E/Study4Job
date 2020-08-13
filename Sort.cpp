@@ -3,12 +3,13 @@
  * @Description: 排序算法自己实现。
  * @Date: 2020-07-15 16:35:34
  * @LastEditors: SP0N9E
- * @LastEditTime: 2020-07-18 20:53:26
+ * @LastEditTime: 2020-08-12 13:21:51
  * @FilePath: \C++_Code\Sort.cpp
  */
 
 #include <iostream>
 #include <vector>
+#include<stack>
 using namespace std;
 
 int partition(vector<int> &num, int low, int high)
@@ -41,9 +42,45 @@ void QSortHelper(vector<int> &num, int low, int high)
     }
 }
 
+// 非递归版本
+void QSortHelper2(vector<int> &a, int left,int right)
+{
+    if (a.size() == 0|| left < 0 || right <= 0 || left>right)
+        return;
+    stack<int>temp;
+    int i, j;
+    //（注意保存顺序）先将初始状态的左右指针压栈
+    temp.push(right);//先存右指针
+    temp.push(left);//再存左指针
+    while (!temp.empty())
+    {
+        i = temp.top();//先弹出左指针
+        temp.pop();
+        j = temp.top();//再弹出右指针
+        temp.pop();
+        if (i < j)
+        {
+            int k = partition(a, i, j);
+            if (k > i)
+            {
+                temp.push(k - 1);//保存中间变量
+                temp.push(i);  //保存中间变量
+            }
+            if (j > k)
+            {
+                temp.push(j);
+                temp.push(k + 1);
+            }
+        }
+
+    }
+
+}
+
 void QSort(vector<int> &num)
 {
-    QSortHelper(num, 0, num.size() - 1);
+    //QSortHelper(num, 0, num.size() - 1);
+    QSortHelper2(num, 0, num.size() - 1);
 }
 
 void Merge(vector<int> &num, int L1, int R1, int L2, int R2)
@@ -184,7 +221,7 @@ int main()
 
     vector<int> test = {72, 6, 57, 88, 60, 42, 83, 73, 48, 85};
     //vector<int> test = {5, 1, 1, 2, 0, 0};
-    HeapSort(test);
+    QSort(test);
     for (auto tmp : test)
     {
         cout << tmp << " ";
